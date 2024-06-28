@@ -4,8 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+const_for = "0.1.4"
 getrandom = "0.2.15"
 oorandom = "11.1.3"
+
 
 [dev-dependencies]
 quickcheck = "1.0.3"
