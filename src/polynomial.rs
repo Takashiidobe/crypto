@@ -2213,3 +2213,1475 @@ impl BitXorAssign<&u64> for P64 {
         *self = *self ^ *other;
     }
 }
+
+#[derive(Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(transparent)]
+pub struct P16(pub u16);
+
+impl P16 {
+    pub const fn new(v: u16) -> Self {
+        Self(v)
+    }
+
+    pub const fn get(self) -> u16 {
+        self.0
+    }
+
+    pub const fn add(self, other: P16) -> P16 {
+        Self(self.0 ^ other.0)
+    }
+
+    pub const fn sub(self, other: P16) -> P16 {
+        Self(self.0 ^ other.0)
+    }
+
+    pub const fn naive_wrapping_mul(self, other: P16) -> P16 {
+        let a = self.0;
+        let b = other.0;
+        let mut x = 0;
+        let mut i = 0;
+        while i < 8 {
+            let mask = (((a as i8) << (8 - 1 - i)) >> (8 - 1)) as u16;
+            x ^= mask & (b << i);
+            i += 1;
+        }
+        P16(x)
+    }
+
+    pub const fn mul(self, other: P16) -> P16 {
+        self.naive_wrapping_mul(other)
+    }
+
+    pub fn pow(self, exp: u16) -> P16 {
+        let mut a = self;
+        let mut exp = exp;
+        let mut x = P16(1);
+        loop {
+            if exp & 1 != 0 {
+                x = x.mul(a);
+            }
+
+            exp >>= 1;
+            if exp == 0 {
+                return x;
+            }
+            a = a.mul(a);
+        }
+    }
+
+    pub const fn naive_checked_div(self, other: P16) -> Option<P16> {
+        if other.0 == 0 {
+            None
+        } else {
+            let mut a = self.0;
+            let b = other.0;
+            let mut x = 0;
+            while a.leading_zeros() <= b.leading_zeros() {
+                x ^= 1 << (b.leading_zeros() - a.leading_zeros());
+                a ^= b << (b.leading_zeros() - a.leading_zeros());
+            }
+            Some(P16(x))
+        }
+    }
+
+    pub const fn div(self, other: P16) -> P16 {
+        match self.naive_checked_div(other) {
+            Some(x) => x,
+            None => panic!("Division by 0."),
+        }
+    }
+
+    pub const fn naive_checked_rem(self, other: P16) -> Option<P16> {
+        if other.0 == 0 {
+            None
+        } else {
+            let mut a = self.0;
+            let b = other.0;
+            while a.leading_zeros() <= b.leading_zeros() {
+                a ^= b << (b.leading_zeros() - a.leading_zeros());
+            }
+            Some(P16(a))
+        }
+    }
+
+    pub const fn naive_rem(self, other: P16) -> P16 {
+        match self.naive_checked_rem(other) {
+            Some(x) => x,
+            None => panic!("Division by 0."),
+        }
+    }
+}
+
+impl From<P16> for u16 {
+    fn from(x: P16) -> u16 {
+        x.0
+    }
+}
+
+impl Add<P16> for P16 {
+    type Output = P16;
+
+    fn add(self, other: P16) -> P16 {
+        P16::add(self, other)
+    }
+}
+
+impl Add<P16> for &P16 {
+    type Output = P16;
+
+    fn add(self, other: P16) -> P16 {
+        P16::add(*self, other)
+    }
+}
+
+impl Add<&P16> for P16 {
+    type Output = P16;
+
+    fn add(self, other: &P16) -> P16 {
+        P16::add(self, *other)
+    }
+}
+
+impl Add<&P16> for &P16 {
+    type Output = P16;
+
+    fn add(self, other: &P16) -> P16 {
+        P16::add(*self, *other)
+    }
+}
+
+impl AddAssign<P16> for P16 {
+    fn add_assign(&mut self, other: P16) {
+        *self = self.add(other)
+    }
+}
+
+impl AddAssign<&P16> for P16 {
+    fn add_assign(&mut self, other: &P16) {
+        *self = self.add(*other)
+    }
+}
+
+impl Sum<P16> for P16 {
+    fn sum<I>(iter: I) -> P16
+    where
+        I: Iterator<Item = P16>,
+    {
+        iter.fold(P16(0), |a, x| a + x)
+    }
+}
+
+impl<'a> Sum<&'a P16> for P16 {
+    fn sum<I>(iter: I) -> P16
+    where
+        I: Iterator<Item = &'a P16>,
+    {
+        iter.fold(P16(0), |a, x| a + *x)
+    }
+}
+
+impl Sub for P16 {
+    type Output = P16;
+
+    fn sub(self, other: P16) -> P16 {
+        P16::sub(self, other)
+    }
+}
+
+impl Sub<P16> for &P16 {
+    type Output = P16;
+
+    fn sub(self, other: P16) -> P16 {
+        P16::sub(*self, other)
+    }
+}
+
+impl Sub<&P16> for P16 {
+    type Output = P16;
+
+    fn sub(self, other: &P16) -> P16 {
+        P16::sub(self, *other)
+    }
+}
+
+impl Sub<&P16> for &P16 {
+    type Output = P16;
+
+    fn sub(self, other: &P16) -> P16 {
+        P16::sub(*self, *other)
+    }
+}
+
+impl SubAssign<P16> for P16 {
+    fn sub_assign(&mut self, other: P16) {
+        *self = self.sub(other)
+    }
+}
+
+impl SubAssign<&P16> for P16 {
+    fn sub_assign(&mut self, other: &P16) {
+        *self = self.sub(*other)
+    }
+}
+
+impl Mul for P16 {
+    type Output = P16;
+
+    fn mul(self, other: P16) -> P16 {
+        P16::mul(self, other)
+    }
+}
+
+impl Mul<P16> for &P16 {
+    type Output = P16;
+
+    fn mul(self, other: P16) -> P16 {
+        P16::mul(*self, other)
+    }
+}
+
+impl Mul<&P16> for P16 {
+    type Output = P16;
+
+    fn mul(self, other: &P16) -> P16 {
+        P16::mul(self, *other)
+    }
+}
+
+impl Mul<&P16> for &P16 {
+    type Output = P16;
+
+    fn mul(self, other: &P16) -> P16 {
+        P16::mul(*self, *other)
+    }
+}
+
+impl MulAssign<P16> for P16 {
+    fn mul_assign(&mut self, other: P16) {
+        *self = self.mul(other)
+    }
+}
+
+impl MulAssign<&P16> for P16 {
+    fn mul_assign(&mut self, other: &P16) {
+        *self = self.mul(*other)
+    }
+}
+
+impl Product<P16> for P16 {
+    fn product<I>(iter: I) -> P16
+    where
+        I: Iterator<Item = P16>,
+    {
+        iter.fold(P16(0), |a, x| a * x)
+    }
+}
+
+impl<'a> Product<&'a P16> for P16 {
+    fn product<I>(iter: I) -> P16
+    where
+        I: Iterator<Item = &'a P16>,
+    {
+        iter.fold(P16(0), |a, x| a * *x)
+    }
+}
+
+impl Div for P16 {
+    type Output = P16;
+
+    fn div(self, other: P16) -> P16 {
+        P16::div(self, other)
+    }
+}
+
+impl Div<P16> for &P16 {
+    type Output = P16;
+
+    fn div(self, other: P16) -> P16 {
+        P16::div(*self, other)
+    }
+}
+
+impl Div<&P16> for P16 {
+    type Output = P16;
+
+    fn div(self, other: &P16) -> P16 {
+        P16::div(self, *other)
+    }
+}
+
+impl Div<&P16> for &P16 {
+    type Output = P16;
+
+    fn div(self, other: &P16) -> P16 {
+        P16::div(*self, *other)
+    }
+}
+
+impl DivAssign<P16> for P16 {
+    fn div_assign(&mut self, other: P16) {
+        *self = self.div(other)
+    }
+}
+
+impl DivAssign<&P16> for P16 {
+    fn div_assign(&mut self, other: &P16) {
+        *self = self.div(*other)
+    }
+}
+
+impl Rem for P16 {
+    type Output = P16;
+
+    fn rem(self, other: P16) -> P16 {
+        P16::naive_rem(self, other)
+    }
+}
+
+impl Rem<P16> for &P16 {
+    type Output = P16;
+
+    fn rem(self, other: P16) -> P16 {
+        P16::naive_rem(*self, other)
+    }
+}
+
+impl Rem<&P16> for P16 {
+    type Output = P16;
+
+    fn rem(self, other: &P16) -> P16 {
+        P16::naive_rem(self, *other)
+    }
+}
+
+impl Rem<&P16> for &P16 {
+    type Output = P16;
+
+    fn rem(self, other: &P16) -> P16 {
+        P16::naive_rem(*self, *other)
+    }
+}
+
+impl RemAssign<P16> for P16 {
+    fn rem_assign(&mut self, other: P16) {
+        *self = self.rem(other)
+    }
+}
+
+impl RemAssign<&P16> for P16 {
+    fn rem_assign(&mut self, other: &P16) {
+        *self = self.rem(*other)
+    }
+}
+
+impl Not for P16 {
+    type Output = P16;
+
+    fn not(self) -> P16 {
+        P16(!self.0)
+    }
+}
+
+impl Not for &P16 {
+    type Output = P16;
+
+    fn not(self) -> P16 {
+        P16(!self.0)
+    }
+}
+
+impl BitAnd<P16> for P16 {
+    type Output = P16;
+
+    fn bitand(self, other: P16) -> P16 {
+        P16(self.0 & other.0)
+    }
+}
+
+impl BitAnd<P16> for &P16 {
+    type Output = P16;
+
+    fn bitand(self, other: P16) -> P16 {
+        P16(self.0 & other.0)
+    }
+}
+
+impl BitAnd<&P16> for P16 {
+    type Output = P16;
+
+    fn bitand(self, other: &P16) -> P16 {
+        P16(self.0 & other.0)
+    }
+}
+
+impl BitAnd<&P16> for &P16 {
+    type Output = P16;
+
+    fn bitand(self, other: &P16) -> P16 {
+        P16(self.0 & other.0)
+    }
+}
+
+impl BitAndAssign<P16> for P16 {
+    fn bitand_assign(&mut self, other: P16) {
+        *self = *self & other;
+    }
+}
+
+impl BitAndAssign<&P16> for P16 {
+    fn bitand_assign(&mut self, other: &P16) {
+        *self = *self & *other;
+    }
+}
+
+impl BitAnd<P16> for u16 {
+    type Output = P16;
+
+    fn bitand(self, other: P16) -> P16 {
+        P16(self & other.0)
+    }
+}
+
+impl BitAnd<P16> for &u16 {
+    type Output = P16;
+
+    fn bitand(self, other: P16) -> P16 {
+        P16(self & other.0)
+    }
+}
+
+impl BitAnd<&P16> for u16 {
+    type Output = P16;
+
+    fn bitand(self, other: &P16) -> P16 {
+        P16(self & other.0)
+    }
+}
+
+impl BitAnd<&P16> for &u16 {
+    type Output = P16;
+
+    fn bitand(self, other: &P16) -> P16 {
+        P16(self & other.0)
+    }
+}
+
+impl BitAnd<u16> for P16 {
+    type Output = P16;
+
+    fn bitand(self, other: u16) -> P16 {
+        P16(self.0 & other)
+    }
+}
+
+impl BitAnd<u16> for &P16 {
+    type Output = P16;
+
+    fn bitand(self, other: u16) -> P16 {
+        P16(self.0 & other)
+    }
+}
+
+impl BitAnd<&u16> for P16 {
+    type Output = P16;
+
+    fn bitand(self, other: &u16) -> P16 {
+        P16(self.0 & other)
+    }
+}
+
+impl BitAnd<&u16> for &P16 {
+    type Output = P16;
+
+    fn bitand(self, other: &u16) -> P16 {
+        P16(self.0 & other)
+    }
+}
+
+impl BitAndAssign<u16> for P16 {
+    fn bitand_assign(&mut self, other: u16) {
+        *self = *self & other;
+    }
+}
+
+impl BitAndAssign<&u16> for P16 {
+    fn bitand_assign(&mut self, other: &u16) {
+        *self = *self & *other;
+    }
+}
+
+impl BitOr<P16> for P16 {
+    type Output = P16;
+
+    fn bitor(self, other: P16) -> P16 {
+        P16(self.0 | other.0)
+    }
+}
+
+impl BitOr<P16> for &P16 {
+    type Output = P16;
+
+    fn bitor(self, other: P16) -> P16 {
+        P16(self.0 | other.0)
+    }
+}
+
+impl BitOr<&P16> for P16 {
+    type Output = P16;
+
+    fn bitor(self, other: &P16) -> P16 {
+        P16(self.0 | other.0)
+    }
+}
+
+impl BitOr<&P16> for &P16 {
+    type Output = P16;
+
+    fn bitor(self, other: &P16) -> P16 {
+        P16(self.0 | other.0)
+    }
+}
+
+impl BitOrAssign<P16> for P16 {
+    fn bitor_assign(&mut self, other: P16) {
+        *self = *self | other;
+    }
+}
+
+impl BitOrAssign<&P16> for P16 {
+    fn bitor_assign(&mut self, other: &P16) {
+        *self = *self | *other;
+    }
+}
+
+impl BitOr<P16> for u16 {
+    type Output = P16;
+
+    fn bitor(self, other: P16) -> P16 {
+        P16(self | other.0)
+    }
+}
+
+impl BitOr<P16> for &u16 {
+    type Output = P16;
+
+    fn bitor(self, other: P16) -> P16 {
+        P16(self | other.0)
+    }
+}
+
+impl BitOr<&P16> for u16 {
+    type Output = P16;
+
+    fn bitor(self, other: &P16) -> P16 {
+        P16(self | other.0)
+    }
+}
+
+impl BitOr<&P16> for &u16 {
+    type Output = P16;
+
+    fn bitor(self, other: &P16) -> P16 {
+        P16(self | other.0)
+    }
+}
+
+impl BitOr<u16> for P16 {
+    type Output = P16;
+
+    fn bitor(self, other: u16) -> P16 {
+        P16(self.0 | other)
+    }
+}
+
+impl BitOr<u16> for &P16 {
+    type Output = P16;
+
+    fn bitor(self, other: u16) -> P16 {
+        P16(self.0 | other)
+    }
+}
+
+impl BitOr<&u16> for P16 {
+    type Output = P16;
+
+    fn bitor(self, other: &u16) -> P16 {
+        P16(self.0 | other)
+    }
+}
+
+impl BitOr<&u16> for &P16 {
+    type Output = P16;
+
+    fn bitor(self, other: &u16) -> P16 {
+        P16(self.0 | other)
+    }
+}
+
+impl BitOrAssign<u16> for P16 {
+    fn bitor_assign(&mut self, other: u16) {
+        *self = *self | other;
+    }
+}
+
+impl BitOrAssign<&u16> for P16 {
+    fn bitor_assign(&mut self, other: &u16) {
+        *self = *self | *other;
+    }
+}
+
+impl BitXor<P16> for P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: P16) -> P16 {
+        P16(self.0 ^ other.0)
+    }
+}
+
+impl BitXor<P16> for &P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: P16) -> P16 {
+        P16(self.0 ^ other.0)
+    }
+}
+
+impl BitXor<&P16> for P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: &P16) -> P16 {
+        P16(self.0 ^ other.0)
+    }
+}
+
+impl BitXor<&P16> for &P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: &P16) -> P16 {
+        P16(self.0 ^ other.0)
+    }
+}
+
+impl BitXorAssign<P16> for P16 {
+    fn bitxor_assign(&mut self, other: P16) {
+        *self = *self ^ other;
+    }
+}
+
+impl BitXorAssign<&P16> for P16 {
+    fn bitxor_assign(&mut self, other: &P16) {
+        *self = *self ^ *other;
+    }
+}
+
+impl BitXor<P16> for u16 {
+    type Output = P16;
+
+    fn bitxor(self, other: P16) -> P16 {
+        P16(self ^ other.0)
+    }
+}
+
+impl BitXor<P16> for &u16 {
+    type Output = P16;
+
+    fn bitxor(self, other: P16) -> P16 {
+        P16(self ^ other.0)
+    }
+}
+
+impl BitXor<&P16> for u16 {
+    type Output = P16;
+
+    fn bitxor(self, other: &P16) -> P16 {
+        P16(self ^ other.0)
+    }
+}
+
+impl BitXor<&P16> for &u16 {
+    type Output = P16;
+
+    fn bitxor(self, other: &P16) -> P16 {
+        P16(self ^ other.0)
+    }
+}
+
+impl BitXor<u16> for P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: u16) -> P16 {
+        P16(self.0 ^ other)
+    }
+}
+
+impl BitXor<u16> for &P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: u16) -> P16 {
+        P16(self.0 ^ other)
+    }
+}
+
+impl BitXor<&u16> for P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: &u16) -> P16 {
+        P16(self.0 ^ other)
+    }
+}
+
+impl BitXor<&u16> for &P16 {
+    type Output = P16;
+
+    fn bitxor(self, other: &u16) -> P16 {
+        P16(self.0 ^ other)
+    }
+}
+
+impl BitXorAssign<u16> for P16 {
+    fn bitxor_assign(&mut self, other: u16) {
+        *self = *self ^ other;
+    }
+}
+
+impl BitXorAssign<&u16> for P16 {
+    fn bitxor_assign(&mut self, other: &u16) {
+        *self = *self ^ *other;
+    }
+}
+
+#[derive(Default, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(transparent)]
+pub struct P128(pub u128);
+
+impl P128 {
+    pub const fn new(v: u128) -> Self {
+        Self(v)
+    }
+
+    pub const fn get(self) -> u128 {
+        self.0
+    }
+
+    pub const fn add(self, other: P128) -> P128 {
+        Self(self.0 ^ other.0)
+    }
+
+    pub const fn sub(self, other: P128) -> P128 {
+        Self(self.0 ^ other.0)
+    }
+
+    pub const fn naive_wrapping_mul(self, other: P128) -> P128 {
+        let a = self.0;
+        let b = other.0;
+        let mut x = 0;
+        let mut i = 0;
+        while i < 8 {
+            let mask = (((a as i8) << (8 - 1 - i)) >> (8 - 1)) as u128;
+            x ^= mask & (b << i);
+            i += 1;
+        }
+        P128(x)
+    }
+
+    pub const fn mul(self, other: P128) -> P128 {
+        self.naive_wrapping_mul(other)
+    }
+
+    pub fn pow(self, exp: u128) -> P128 {
+        let mut a = self;
+        let mut exp = exp;
+        let mut x = P128(1);
+        loop {
+            if exp & 1 != 0 {
+                x = x.mul(a);
+            }
+
+            exp >>= 1;
+            if exp == 0 {
+                return x;
+            }
+            a = a.mul(a);
+        }
+    }
+
+    pub const fn naive_checked_div(self, other: P128) -> Option<P128> {
+        if other.0 == 0 {
+            None
+        } else {
+            let mut a = self.0;
+            let b = other.0;
+            let mut x = 0;
+            while a.leading_zeros() <= b.leading_zeros() {
+                x ^= 1 << (b.leading_zeros() - a.leading_zeros());
+                a ^= b << (b.leading_zeros() - a.leading_zeros());
+            }
+            Some(P128(x))
+        }
+    }
+
+    pub const fn div(self, other: P128) -> P128 {
+        match self.naive_checked_div(other) {
+            Some(x) => x,
+            None => panic!("Division by 0."),
+        }
+    }
+
+    pub const fn naive_checked_rem(self, other: P128) -> Option<P128> {
+        if other.0 == 0 {
+            None
+        } else {
+            let mut a = self.0;
+            let b = other.0;
+            while a.leading_zeros() <= b.leading_zeros() {
+                a ^= b << (b.leading_zeros() - a.leading_zeros());
+            }
+            Some(P128(a))
+        }
+    }
+
+    pub const fn naive_rem(self, other: P128) -> P128 {
+        match self.naive_checked_rem(other) {
+            Some(x) => x,
+            None => panic!("Division by 0."),
+        }
+    }
+}
+
+impl From<P128> for u128 {
+    fn from(x: P128) -> u128 {
+        x.0
+    }
+}
+
+impl Add<P128> for P128 {
+    type Output = P128;
+
+    fn add(self, other: P128) -> P128 {
+        P128::add(self, other)
+    }
+}
+
+impl Add<P128> for &P128 {
+    type Output = P128;
+
+    fn add(self, other: P128) -> P128 {
+        P128::add(*self, other)
+    }
+}
+
+impl Add<&P128> for P128 {
+    type Output = P128;
+
+    fn add(self, other: &P128) -> P128 {
+        P128::add(self, *other)
+    }
+}
+
+impl Add<&P128> for &P128 {
+    type Output = P128;
+
+    fn add(self, other: &P128) -> P128 {
+        P128::add(*self, *other)
+    }
+}
+
+impl AddAssign<P128> for P128 {
+    fn add_assign(&mut self, other: P128) {
+        *self = self.add(other)
+    }
+}
+
+impl AddAssign<&P128> for P128 {
+    fn add_assign(&mut self, other: &P128) {
+        *self = self.add(*other)
+    }
+}
+
+impl Sum<P128> for P128 {
+    fn sum<I>(iter: I) -> P128
+    where
+        I: Iterator<Item = P128>,
+    {
+        iter.fold(P128(0), |a, x| a + x)
+    }
+}
+
+impl<'a> Sum<&'a P128> for P128 {
+    fn sum<I>(iter: I) -> P128
+    where
+        I: Iterator<Item = &'a P128>,
+    {
+        iter.fold(P128(0), |a, x| a + *x)
+    }
+}
+
+impl Sub for P128 {
+    type Output = P128;
+
+    fn sub(self, other: P128) -> P128 {
+        P128::sub(self, other)
+    }
+}
+
+impl Sub<P128> for &P128 {
+    type Output = P128;
+
+    fn sub(self, other: P128) -> P128 {
+        P128::sub(*self, other)
+    }
+}
+
+impl Sub<&P128> for P128 {
+    type Output = P128;
+
+    fn sub(self, other: &P128) -> P128 {
+        P128::sub(self, *other)
+    }
+}
+
+impl Sub<&P128> for &P128 {
+    type Output = P128;
+
+    fn sub(self, other: &P128) -> P128 {
+        P128::sub(*self, *other)
+    }
+}
+
+impl SubAssign<P128> for P128 {
+    fn sub_assign(&mut self, other: P128) {
+        *self = self.sub(other)
+    }
+}
+
+impl SubAssign<&P128> for P128 {
+    fn sub_assign(&mut self, other: &P128) {
+        *self = self.sub(*other)
+    }
+}
+
+impl Mul for P128 {
+    type Output = P128;
+
+    fn mul(self, other: P128) -> P128 {
+        P128::mul(self, other)
+    }
+}
+
+impl Mul<P128> for &P128 {
+    type Output = P128;
+
+    fn mul(self, other: P128) -> P128 {
+        P128::mul(*self, other)
+    }
+}
+
+impl Mul<&P128> for P128 {
+    type Output = P128;
+
+    fn mul(self, other: &P128) -> P128 {
+        P128::mul(self, *other)
+    }
+}
+
+impl Mul<&P128> for &P128 {
+    type Output = P128;
+
+    fn mul(self, other: &P128) -> P128 {
+        P128::mul(*self, *other)
+    }
+}
+
+impl MulAssign<P128> for P128 {
+    fn mul_assign(&mut self, other: P128) {
+        *self = self.mul(other)
+    }
+}
+
+impl MulAssign<&P128> for P128 {
+    fn mul_assign(&mut self, other: &P128) {
+        *self = self.mul(*other)
+    }
+}
+
+impl Product<P128> for P128 {
+    fn product<I>(iter: I) -> P128
+    where
+        I: Iterator<Item = P128>,
+    {
+        iter.fold(P128(0), |a, x| a * x)
+    }
+}
+
+impl<'a> Product<&'a P128> for P128 {
+    fn product<I>(iter: I) -> P128
+    where
+        I: Iterator<Item = &'a P128>,
+    {
+        iter.fold(P128(0), |a, x| a * *x)
+    }
+}
+
+impl Div for P128 {
+    type Output = P128;
+
+    fn div(self, other: P128) -> P128 {
+        P128::div(self, other)
+    }
+}
+
+impl Div<P128> for &P128 {
+    type Output = P128;
+
+    fn div(self, other: P128) -> P128 {
+        P128::div(*self, other)
+    }
+}
+
+impl Div<&P128> for P128 {
+    type Output = P128;
+
+    fn div(self, other: &P128) -> P128 {
+        P128::div(self, *other)
+    }
+}
+
+impl Div<&P128> for &P128 {
+    type Output = P128;
+
+    fn div(self, other: &P128) -> P128 {
+        P128::div(*self, *other)
+    }
+}
+
+impl DivAssign<P128> for P128 {
+    fn div_assign(&mut self, other: P128) {
+        *self = self.div(other)
+    }
+}
+
+impl DivAssign<&P128> for P128 {
+    fn div_assign(&mut self, other: &P128) {
+        *self = self.div(*other)
+    }
+}
+
+impl Rem for P128 {
+    type Output = P128;
+
+    fn rem(self, other: P128) -> P128 {
+        P128::naive_rem(self, other)
+    }
+}
+
+impl Rem<P128> for &P128 {
+    type Output = P128;
+
+    fn rem(self, other: P128) -> P128 {
+        P128::naive_rem(*self, other)
+    }
+}
+
+impl Rem<&P128> for P128 {
+    type Output = P128;
+
+    fn rem(self, other: &P128) -> P128 {
+        P128::naive_rem(self, *other)
+    }
+}
+
+impl Rem<&P128> for &P128 {
+    type Output = P128;
+
+    fn rem(self, other: &P128) -> P128 {
+        P128::naive_rem(*self, *other)
+    }
+}
+
+impl RemAssign<P128> for P128 {
+    fn rem_assign(&mut self, other: P128) {
+        *self = self.rem(other)
+    }
+}
+
+impl RemAssign<&P128> for P128 {
+    fn rem_assign(&mut self, other: &P128) {
+        *self = self.rem(*other)
+    }
+}
+
+impl Not for P128 {
+    type Output = P128;
+
+    fn not(self) -> P128 {
+        P128(!self.0)
+    }
+}
+
+impl Not for &P128 {
+    type Output = P128;
+
+    fn not(self) -> P128 {
+        P128(!self.0)
+    }
+}
+
+impl BitAnd<P128> for P128 {
+    type Output = P128;
+
+    fn bitand(self, other: P128) -> P128 {
+        P128(self.0 & other.0)
+    }
+}
+
+impl BitAnd<P128> for &P128 {
+    type Output = P128;
+
+    fn bitand(self, other: P128) -> P128 {
+        P128(self.0 & other.0)
+    }
+}
+
+impl BitAnd<&P128> for P128 {
+    type Output = P128;
+
+    fn bitand(self, other: &P128) -> P128 {
+        P128(self.0 & other.0)
+    }
+}
+
+impl BitAnd<&P128> for &P128 {
+    type Output = P128;
+
+    fn bitand(self, other: &P128) -> P128 {
+        P128(self.0 & other.0)
+    }
+}
+
+impl BitAndAssign<P128> for P128 {
+    fn bitand_assign(&mut self, other: P128) {
+        *self = *self & other;
+    }
+}
+
+impl BitAndAssign<&P128> for P128 {
+    fn bitand_assign(&mut self, other: &P128) {
+        *self = *self & *other;
+    }
+}
+
+impl BitAnd<P128> for u128 {
+    type Output = P128;
+
+    fn bitand(self, other: P128) -> P128 {
+        P128(self & other.0)
+    }
+}
+
+impl BitAnd<P128> for &u128 {
+    type Output = P128;
+
+    fn bitand(self, other: P128) -> P128 {
+        P128(self & other.0)
+    }
+}
+
+impl BitAnd<&P128> for u128 {
+    type Output = P128;
+
+    fn bitand(self, other: &P128) -> P128 {
+        P128(self & other.0)
+    }
+}
+
+impl BitAnd<&P128> for &u128 {
+    type Output = P128;
+
+    fn bitand(self, other: &P128) -> P128 {
+        P128(self & other.0)
+    }
+}
+
+impl BitAnd<u128> for P128 {
+    type Output = P128;
+
+    fn bitand(self, other: u128) -> P128 {
+        P128(self.0 & other)
+    }
+}
+
+impl BitAnd<u128> for &P128 {
+    type Output = P128;
+
+    fn bitand(self, other: u128) -> P128 {
+        P128(self.0 & other)
+    }
+}
+
+impl BitAnd<&u128> for P128 {
+    type Output = P128;
+
+    fn bitand(self, other: &u128) -> P128 {
+        P128(self.0 & other)
+    }
+}
+
+impl BitAnd<&u128> for &P128 {
+    type Output = P128;
+
+    fn bitand(self, other: &u128) -> P128 {
+        P128(self.0 & other)
+    }
+}
+
+impl BitAndAssign<u128> for P128 {
+    fn bitand_assign(&mut self, other: u128) {
+        *self = *self & other;
+    }
+}
+
+impl BitAndAssign<&u128> for P128 {
+    fn bitand_assign(&mut self, other: &u128) {
+        *self = *self & *other;
+    }
+}
+
+impl BitOr<P128> for P128 {
+    type Output = P128;
+
+    fn bitor(self, other: P128) -> P128 {
+        P128(self.0 | other.0)
+    }
+}
+
+impl BitOr<P128> for &P128 {
+    type Output = P128;
+
+    fn bitor(self, other: P128) -> P128 {
+        P128(self.0 | other.0)
+    }
+}
+
+impl BitOr<&P128> for P128 {
+    type Output = P128;
+
+    fn bitor(self, other: &P128) -> P128 {
+        P128(self.0 | other.0)
+    }
+}
+
+impl BitOr<&P128> for &P128 {
+    type Output = P128;
+
+    fn bitor(self, other: &P128) -> P128 {
+        P128(self.0 | other.0)
+    }
+}
+
+impl BitOrAssign<P128> for P128 {
+    fn bitor_assign(&mut self, other: P128) {
+        *self = *self | other;
+    }
+}
+
+impl BitOrAssign<&P128> for P128 {
+    fn bitor_assign(&mut self, other: &P128) {
+        *self = *self | *other;
+    }
+}
+
+impl BitOr<P128> for u128 {
+    type Output = P128;
+
+    fn bitor(self, other: P128) -> P128 {
+        P128(self | other.0)
+    }
+}
+
+impl BitOr<P128> for &u128 {
+    type Output = P128;
+
+    fn bitor(self, other: P128) -> P128 {
+        P128(self | other.0)
+    }
+}
+
+impl BitOr<&P128> for u128 {
+    type Output = P128;
+
+    fn bitor(self, other: &P128) -> P128 {
+        P128(self | other.0)
+    }
+}
+
+impl BitOr<&P128> for &u128 {
+    type Output = P128;
+
+    fn bitor(self, other: &P128) -> P128 {
+        P128(self | other.0)
+    }
+}
+
+impl BitOr<u128> for P128 {
+    type Output = P128;
+
+    fn bitor(self, other: u128) -> P128 {
+        P128(self.0 | other)
+    }
+}
+
+impl BitOr<u128> for &P128 {
+    type Output = P128;
+
+    fn bitor(self, other: u128) -> P128 {
+        P128(self.0 | other)
+    }
+}
+
+impl BitOr<&u128> for P128 {
+    type Output = P128;
+
+    fn bitor(self, other: &u128) -> P128 {
+        P128(self.0 | other)
+    }
+}
+
+impl BitOr<&u128> for &P128 {
+    type Output = P128;
+
+    fn bitor(self, other: &u128) -> P128 {
+        P128(self.0 | other)
+    }
+}
+
+impl BitOrAssign<u128> for P128 {
+    fn bitor_assign(&mut self, other: u128) {
+        *self = *self | other;
+    }
+}
+
+impl BitOrAssign<&u128> for P128 {
+    fn bitor_assign(&mut self, other: &u128) {
+        *self = *self | *other;
+    }
+}
+
+impl BitXor<P128> for P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: P128) -> P128 {
+        P128(self.0 ^ other.0)
+    }
+}
+
+impl BitXor<P128> for &P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: P128) -> P128 {
+        P128(self.0 ^ other.0)
+    }
+}
+
+impl BitXor<&P128> for P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: &P128) -> P128 {
+        P128(self.0 ^ other.0)
+    }
+}
+
+impl BitXor<&P128> for &P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: &P128) -> P128 {
+        P128(self.0 ^ other.0)
+    }
+}
+
+impl BitXorAssign<P128> for P128 {
+    fn bitxor_assign(&mut self, other: P128) {
+        *self = *self ^ other;
+    }
+}
+
+impl BitXorAssign<&P128> for P128 {
+    fn bitxor_assign(&mut self, other: &P128) {
+        *self = *self ^ *other;
+    }
+}
+
+impl BitXor<P128> for u128 {
+    type Output = P128;
+
+    fn bitxor(self, other: P128) -> P128 {
+        P128(self ^ other.0)
+    }
+}
+
+impl BitXor<P128> for &u128 {
+    type Output = P128;
+
+    fn bitxor(self, other: P128) -> P128 {
+        P128(self ^ other.0)
+    }
+}
+
+impl BitXor<&P128> for u128 {
+    type Output = P128;
+
+    fn bitxor(self, other: &P128) -> P128 {
+        P128(self ^ other.0)
+    }
+}
+
+impl BitXor<&P128> for &u128 {
+    type Output = P128;
+
+    fn bitxor(self, other: &P128) -> P128 {
+        P128(self ^ other.0)
+    }
+}
+
+impl BitXor<u128> for P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: u128) -> P128 {
+        P128(self.0 ^ other)
+    }
+}
+
+impl BitXor<u128> for &P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: u128) -> P128 {
+        P128(self.0 ^ other)
+    }
+}
+
+impl BitXor<&u128> for P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: &u128) -> P128 {
+        P128(self.0 ^ other)
+    }
+}
+
+impl BitXor<&u128> for &P128 {
+    type Output = P128;
+
+    fn bitxor(self, other: &u128) -> P128 {
+        P128(self.0 ^ other)
+    }
+}
+
+impl BitXorAssign<u128> for P128 {
+    fn bitxor_assign(&mut self, other: u128) {
+        *self = *self ^ other;
+    }
+}
+
+impl BitXorAssign<&u128> for P128 {
+    fn bitxor_assign(&mut self, other: &u128) {
+        *self = *self ^ *other;
+    }
+}
