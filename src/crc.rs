@@ -1,14 +1,14 @@
-use crate::polynomial::P64;
 use const_for::const_for;
+use gf256::p64;
 
 pub fn crc32(data: &[u8]) -> u32 {
-    const POLYNOMIAL: P64 = P64(0x104c11db7);
+    const POLYNOMIAL: p64 = p64(0x104c11db7);
 
     const CRC_TABLE: [u32; 256] = {
         let mut table = [0; 256];
         const_for!(i in 0..table.len() => {
             let x = (i as u32).reverse_bits();
-            let x = P64((x as u64) << 8).naive_rem(POLYNOMIAL).0 as u32;
+            let x = p64((x as u64) << 8).naive_rem(POLYNOMIAL).0 as u32;
             table[i] = x.reverse_bits();
         });
 

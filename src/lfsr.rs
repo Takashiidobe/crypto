@@ -1,9 +1,9 @@
-use crate::polynomial::P128;
+use gf256::p128;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Lfsr(pub u64);
 
-const POLYNOMIAL: P128 = P128(0x1000000000000001b);
+const POLYNOMIAL: p128 = p128(0x1000000000000001b);
 
 impl Lfsr {
     pub fn new(mut seed: u64) -> Self {

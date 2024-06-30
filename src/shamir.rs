@@ -1,30 +1,30 @@
 use oorandom::Rand32;
 
-use crate::galois_field::Gf256Aes;
+use gf256::gf256;
 
-fn poly_random(rng: &mut Rand32, secret: Gf256Aes, degree: usize) -> Vec<Gf256Aes> {
+fn poly_random(rng: &mut Rand32, secret: gf256, degree: usize) -> Vec<gf256> {
     let mut f = vec![secret];
     for _ in 0..degree {
         let num = rng.rand_range(1..255) as u8;
-        f.push(Gf256Aes::new(num));
+        f.push(gf256::new(num));
     }
     f
 }
 
-fn poly_eval(f: &[Gf256Aes], x: Gf256Aes) -> Gf256Aes {
-    let mut y = Gf256Aes::new(0);
+fn poly_eval(f: &[gf256], x: gf256) -> gf256 {
+    let mut y = gf256::new(0);
     for c in f.iter().rev() {
         y = y * x + c;
     }
     y
 }
 
-fn poly_interpolate(xs: &[Gf256Aes], ys: &[Gf256Aes]) -> Gf256Aes {
+fn poly_interpolate(xs: &[gf256], ys: &[gf256]) -> gf256 {
     assert!(xs.len() == ys.len());
 
-    let mut y = Gf256Aes::new(0);
+    let mut y = gf256::new(0);
     for (i, (x0, y0)) in xs.iter().zip(ys).enumerate() {
-        let mut li = Gf256Aes::new(1);
+        let mut li = gf256::new(1);
         for (j, (x1, _y1)) in xs.iter().zip(ys).enumerate() {
             if i != j {
                 li *= x1 / (x1 - x0);
@@ -54,11 +54,11 @@ pub fn generate(secret: &[u8], n: usize, k: usize) -> Vec<Vec<u8>> {
 
     for x in secret {
         // generate a random polynomial for each byte
-        let f = poly_random(&mut rng, Gf256Aes::new(*x), k - 1);
+        let f = poly_random(&mut rng, gf256::new(*x), k - 1);
 
         // assign each share with a point at f(i)
         for i in 0..n {
-            shares[i].push(poly_eval(&f, Gf256Aes::new(i as u8 + 1)).0);
+            shares[i].push(poly_eval(&f, gf256::new(i as u8 + 1)).0);
         }
     }
 
@@ -82,12 +82,12 @@ pub fn reconstruct<S: AsRef<[u8]>>(shares: &[S]) -> Vec<u8> {
     // x is prepended to each share
     let xs = shares
         .iter()
-        .map(|s| Gf256Aes::new(s.as_ref()[0]))
+        .map(|s| gf256::new(s.as_ref()[0]))
         .collect::<Vec<_>>();
     for i in 1..len {
         let ys = shares
             .iter()
-            .map(|s| Gf256Aes::new(s.as_ref()[i]))
+            .map(|s| gf256::new(s.as_ref()[i]))
             .collect::<Vec<_>>();
         secret.push(poly_interpolate(&xs, &ys).0);
     }

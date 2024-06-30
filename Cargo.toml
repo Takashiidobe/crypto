@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 const_for = "0.1.4"
 getrandom = "0.2.15"
+gf256 = "0.3.0"
 oorandom = "11.1.3"
 
 [dev-dependencies]
