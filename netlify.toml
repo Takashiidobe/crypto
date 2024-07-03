@@ -1,0 +1,7 @@
+[build]
+publish = "target/doc"
+command = "cargo doc --document-private-items --open --no-deps"
+
+[[redirects]]
+from = "/*"
+to = "/crypto/:splat"

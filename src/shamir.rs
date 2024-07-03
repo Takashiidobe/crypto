@@ -1,3 +1,13 @@
+#![cfg_attr(feature = "doc-images",
+cfg_attr(all(),
+doc = ::embed_doc_image::embed_image!("two-degree-polynomial", "./images/two-points-in-two-degree-polynomial.png"),
+doc = ::embed_doc_image::embed_image!("lagrange-polynomial", "./images/lagrange-polynomial.png"),
+))]
+#![cfg_attr(
+    not(feature = "doc-images"),
+    doc = "**Doc images not enabled**. Compile with feature `doc-images` and Rust version >= 1.54 \
+           to enable."
+)]
 //! # Shamir Secret Sharing
 //!
 //! Shamir Secret Sharing(SSS) is an algorithm for splitting a secret $S$ into a number of shares, $n$,
@@ -28,7 +38,7 @@
 //! Imagine you are trying to recover a line (a polynomial with a degree of 1) from some number of
 //! given points, $k$. If $k = 1$, there are infinitely many lines that pass through your given
 //! point. Let's say our 1 point is the y-intercept, and it has a value of 3. How many lines have a
-//! y-intercept of 3? Infinitely many.
+//! y-intercept of 3? Infinitely many, as all of these lines could possibly fit.
 //!
 //! $$ y = -\infty..\infty + 3 $$
 //!
@@ -37,6 +47,9 @@
 //!
 //! This works for a polynomial of any degree. If you want to recover a polynomial with degree 2 (a
 //! parabola), you'd need 3 points to recover it.
+//!
+//! ![Infinite number of polynomials of degree 2 with 2 points][two-degree-polynomial]
+//! (From: https://en.wikipedia.org/wiki/File:3_polynomials_of_degree_2_through_2_points.svg)
 //!
 //! If we have 3 points for our parabola, however, we can recover the unique polynomial. How we do
 //! that is discussed in the next section.
@@ -57,6 +70,14 @@
 //!
 //! Finally, all of the polynomials are multiplied together to recover the original polynomial (the
 //! secret polynomial) and its secret value, the y-intercept can be easily found from it.
+//!
+//! In visual form:
+//!
+//! ![Lagrange Polynomial][lagrange-polynomial]
+//! (From: https://en.wikipedia.org/wiki/Lagrange_polynomial#/media/File:Lagrange_polynomial.svg)
+//!
+//! Note that the black line is the desired polynomial, and the rest are multiplied together to
+//! recover the original polynomial and its y-intercept.
 //!
 //! In pseudocode that would look like the following:
 //! ```
@@ -94,6 +115,9 @@ use oorandom::Rand32;
 
 use gf256::gf256;
 
+#[cfg(feature = "doc-images")]
+use embed_doc_image::embed_doc_image;
+
 /// This function generates a random polynomial for Shamir's secret sharing.
 /// It takes a secret and degree of polynomial to create (the amount of shares)
 /// It sets the y-intercept to the secret passed in and then generates as many points as there are
@@ -116,6 +140,9 @@ fn poly_random(rng: &mut Rand32, secret: gf256, degree: usize) -> Vec<gf256> {
 }
 
 /// This function takes a polynomial and evaluates it.
+/// The polynomial is passed in in reverse order:
+/// Normally, polynomials are written as $ax^2 + bx + c$, but this function takes the y-intercept
+/// first, and then the unknowns, like $c + bx + ax^2$.
 fn poly_eval(f: &[gf256], x: gf256) -> gf256 {
     let mut y = gf256::new(0);
     for c in f.iter().rev() {

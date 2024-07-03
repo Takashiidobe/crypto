@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 const_for = "0.1.4"
+embed-doc-image = "0.1.4"
 getrandom = "0.2.15"
 gf256 = "0.3.0"
 oorandom = "11.1.3"
@@ -14,4 +15,8 @@ quickcheck = "1.0.3"
 quickcheck_macros = "1.0.0"
 
 [package.metadata.docs.rs]
-rustdoc-args = [ "--html-in-header", "./src/docs-header.html" ]
+rustdoc-args = [ "--html-in-header", "./src/assets/docs-header.html" ]
+features = ["doc-images"]
+
+[features]
+doc-images = []
