@@ -1,5 +1,6 @@
 #![recursion_limit = "300"] // for generating constant implementations of aes lookup tables
 pub mod aes;
+pub mod chacha20;
 pub mod crc;
 pub mod diffie_hellman;
 pub mod hmac;

@@ -11,6 +11,7 @@ This repo contains toy implementations of the following algorithms:
 - [Shamir Secret Sharing](./src/shamir.rs)
 - [CRC32](./src/crc.rs)
 - [Linear Feedback Shift Registers](./src/lfsr.rs)
+- [Chacha20](./src/chacha20.rs)
 
 - The AES implementation comes from
 <https://github.com/5n00py/soft-aes/blob/main/src/aes/aes_core.rs>.
@@ -20,8 +21,11 @@ This repo contains toy implementations of the following algorithms:
 - The implementations of Reed-Solomon, Shamir secret sharing, CRC, and
 LFSRs come from <https://github.com/geky/gf256>.
 
+- ChaCha20 comes from <https://github.com/skyposter/chacha20>
+
 Some future ideas?
 
 - SHA2, SHA3?
 - RSA
-- Chacha20, Salsa
+- bcrypt
+- Elliptical curves
