@@ -10,6 +10,9 @@ doc = ::embed_doc_image::embed_image!("lagrange-polynomial", "./images/lagrange-
 )]
 //! # Shamir Secret Sharing
 //!
+//! This system was explained in a paper by Adi Shamir in 1979: [How to Share a
+//! Secret](https://web.mit.edu/6.857/OldStuff/Fall03/ref/Shamir-HowToShareASecret.pdf).
+//!
 //! Shamir Secret Sharing(SSS) is an algorithm for splitting a secret $S$ into a number of shares, $n$,
 //! where at least $k$ shares are required to recover the original secret.
 //! SSS also has a few nice properties:
@@ -49,7 +52,8 @@ doc = ::embed_doc_image::embed_image!("lagrange-polynomial", "./images/lagrange-
 //! parabola), you'd need 3 points to recover it.
 //!
 //! ![Infinite number of polynomials of degree 2 with 2 points][two-degree-polynomial]
-//! (From: https://en.wikipedia.org/wiki/File:3_polynomials_of_degree_2_through_2_points.svg)
+//!
+//! From: <https://en.wikipedia.org/wiki/File:3_polynomials_of_degree_2_through_2_points.svg>
 //!
 //! If we have 3 points for our parabola, however, we can recover the unique polynomial. How we do
 //! that is discussed in the next section.
@@ -74,7 +78,8 @@ doc = ::embed_doc_image::embed_image!("lagrange-polynomial", "./images/lagrange-
 //! In visual form:
 //!
 //! ![Lagrange Polynomial][lagrange-polynomial]
-//! (From: https://en.wikipedia.org/wiki/Lagrange_polynomial#/media/File:Lagrange_polynomial.svg)
+//!
+//! From: <https://en.wikipedia.org/wiki/Lagrange_polynomial#/media/File:Lagrange_polynomial.svg>
 //!
 //! Note that the black line is the desired polynomial, and the rest are multiplied together to
 //! recover the original polynomial and its y-intercept.
@@ -151,6 +156,9 @@ fn poly_eval(f: &[gf256], x: gf256) -> gf256 {
     y
 }
 
+/// This function performs polynomial interpolation. Given a set of points defined by x and y
+/// coordinates, it returns the y-intercept of the unique polynomial that passes through all of the
+/// points, with the degree $n - 1$, where $n$ is the number of points passed to the function.
 fn poly_interpolate(xs: &[gf256], ys: &[gf256]) -> gf256 {
     assert!(xs.len() == ys.len());
 
@@ -169,6 +177,7 @@ fn poly_interpolate(xs: &[gf256], ys: &[gf256]) -> gf256 {
     y
 }
 
+/// This function generates a polynomial with the given secret, passed as bytes.
 pub fn generate(secret: &[u8], n: usize, k: usize) -> Vec<Vec<u8>> {
     // we only support up to 255 shares
     assert!(
@@ -197,6 +206,10 @@ pub fn generate(secret: &[u8], n: usize, k: usize) -> Vec<Vec<u8>> {
     shares
 }
 
+/// This function attempts to reconstruct a secret from some amount of shares.
+/// Given that this function doesn't know the number of shares required ($k$), it will try to fit a
+/// polynomial in any case, thus providing an incorrect secret if there are fewer than $k$ shares
+/// provided or at least one of the $k$ provided shares is incorrect.
 pub fn reconstruct<S: AsRef<[u8]>>(shares: &[S]) -> Vec<u8> {
     assert!(
         shares
