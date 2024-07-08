@@ -3,6 +3,7 @@ pub mod aes;
 pub mod chacha20;
 pub mod crc;
 pub mod diffie_hellman;
+pub mod hamming;
 pub mod hmac;
 pub mod lfsr;
 pub mod md5;

@@ -85,7 +85,7 @@ doc = ::embed_doc_image::embed_image!("lagrange-polynomial", "./images/lagrange-
 //! recover the original polynomial and its y-intercept.
 //!
 //! In pseudocode that would look like the following:
-//! ```
+//! ```txt
 //! def interpolate(points: list[(x, y)]) -> number:
 //!     let y = 0
 //!     for (i, (x_0, y_0)) in enumerate(points):
