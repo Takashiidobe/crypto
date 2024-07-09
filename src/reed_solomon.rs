@@ -1,3 +1,34 @@
+//! # Reed Solomon codes
+//!
+//! Reed solomon codes are error correcting codes that create $n$ shards of data and allow $k$
+//! shards where $k \leq n$ to recover the underlying data. Reed solomon codes have wide industrial
+//! use -- they are used in QR codes, CDs, Hard disks, and even large systems like amazon's S3.
+//!
+//! Reed solomon codes work by doing arithmetic over finite fields. A reed solomon code, like a
+//! (255, 223) code has 223 data bits and 32 parity bits. The 32 parity bits can be used to detect
+//! up to 32 errors in the block, and correct up to 16 errors.
+//!
+//! Reed solomon codes encode the data in the block and the parity bits using lagrange
+//! interpolation.
+//!
+//! Take an example where there are 3 points, (1, 2), (3, 2) and (4, -1) which define a polynomial
+//! of degree 2 (since $n$ points uniquely define a polynomial with a degree of $n - 1$.
+//! There are 3 lagrange polynomials, one for each point. For the first point, (1, 2), the lagrange
+//! polynomial is equal to 1 at the x coordinate (1), and 0 at all the other y coordinates of the
+//! remaining points, (3, 4). The second point is (3, 2), so the lagrange polynomial for that point
+//! is (3, 1), while the other points are (1, 0) and (4, 0). Finally, the last point is (4, 1),
+//! with the other points being (1, 0) and (3, 0).
+//!
+//! We then interpolate the first polynomial: Since the polynomial has points (1, 1), (3, 0) and
+//! (4, 0), it is defined as $l_1(x) = (x - 3)(x - 4)$. After subbing in 1 for $x$, the x value is
+//! 6 on the right hand side, and the left hand side has to be 1, so the final polynomial is:
+//! $l_1(x) = \frac{1}{6}(x - 3)(x - 4)$.
+//! After doing the same for the other points, we multiply each polynomial by the original point's
+//! y coordinate, so (2, 2, -1), and then sum the polynomials together to get the unique polynomial.
+//! Finally, we can take as many other points on the curve as required and then pack them with the
+//! original data. Thus, we take as many bits as required to allow for $k$ to reconstruct the
+//! polynomial, so $k$ has to be the number of bits + 1.
+
 // Constants for Reed-Solomon error correction
 //
 // Reed-Solomon can correct ECC_SIZE known erasures and ECC_SIZE/2 unknown
